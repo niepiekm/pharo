@@ -66,6 +66,11 @@ Slot class >> initialize [
 		ifNotNil: [ (WeakIdentityKeyDictionary newFrom: Properties) rehash]
 ]
 
+{ #category : #testing }
+Slot class >> isUsed [
+	^super isUsed or: [self slotUsers isNotEmpty ]
+]
+
 { #category : #'instance creation' }
 Slot class >> named: aSymbol [
 	self checkValidName: aSymbol.
@@ -94,6 +99,13 @@ Slot class >> slotSetting: aBuilder [
 		target: self
 ]
 
+{ #category : #testing }
+Slot class >> slotUsers [
+	"all classes or traits that have slots of this kind"
+	^self environment allBehaviors 
+		select:  [ :class | class slots anySatisfy: [ :slot | slot class == self ] ]
+]
+
 { #category : #comparing }
 Slot >> = other [
 	"Every subclass that adds state must redefine this method"
@@ -118,6 +130,13 @@ Slot >> addSlotInitToInitialize: aClass [
 	Author 
 		useAuthor: 'Generated' 
 		during: [ aClass compile: source classified: 'initialization' ]
+]
+
+{ #category : #'class building' }
+Slot >> asClassVariable [
+	self
+		error:
+			'Slots can not be used to define Class Variables, you need to create a LiteralVariable subclass instead'
 ]
 
 { #category : #converting }
@@ -252,6 +271,11 @@ Slot >> isLocal [
 Slot >> isReadIn: aCompiledCode [
 	^aCompiledCode ast instanceVariableReadNodes
 		 anySatisfy: [ :node | node binding slot == self ]
+]
+
+{ #category : #testing }
+Slot >> isReferenced [
+	^self usingMethods isNotEmpty
 ]
 
 { #category : #testing }

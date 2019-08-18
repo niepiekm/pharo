@@ -39,8 +39,10 @@ CompiledMethod class >> basicNew: size [
 
 { #category : #'class initialization' }
 CompiledMethod class >> checkBytecodeSetConflictsInMethodsWith: aBlock [
-	(self allSubInstances detect: aBlock ifNone: [ ])
-		ifNotNil: [ Warning signal: 'There are existing CompiledMethods with a different encoderClass.' ]
+
+	self allSubInstances
+		detect: aBlock
+		ifFound: [ Warning signal: 'There are existing CompiledMethods with a different encoderClass.' ]
 ]
 
 { #category : #'class initialization' }
@@ -324,6 +326,11 @@ CompiledMethod class >> toReturnSelfTrailerBytes: trailer [
 	^self newBytes: 3 trailerBytes: trailer nArgs: 0 nTemps: 0 nStack: 0 nLits: 2 primitive: 256
 ]
 
+{ #category : #'source code management' }
+CompiledMethod >> argumentNames [
+	^ self propertyAt: #argumentNames ifAbsent: [ super argumentNames ]
+]
+
 { #category : #'accessing-backward compatible' }
 CompiledMethod >> category [
 	"Please favor protocol instead of category. We want to have method protocol and class package and tag = a category"
@@ -511,6 +518,8 @@ CompiledMethod >> isConflict [
 { #category : #testing }
 CompiledMethod >> isDeprecated [
 	"Object selectorsInProtocol: #deprecation"
+	self methodClass isDeprecated ifTrue: [ ^ true ].
+
 	(self
 		sendsAnySelectorOf:
 			#(#deprecated: #deprecated:on:in: #deprecated:on:in:transformWith: #deprecated:transformWith:))
@@ -680,6 +689,12 @@ CompiledMethod >> methodClass: aClass [
 { #category : #accessing }
 CompiledMethod >> name [
 	^ self printString
+]
+
+{ #category : #accessing }
+CompiledMethod >> numberOfReservedLiterals [
+
+	^ 2
 ]
 
 { #category : #accessing }

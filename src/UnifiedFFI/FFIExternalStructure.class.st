@@ -106,7 +106,7 @@ FFIExternalStructure class >> defineFieldOffset: fieldName value: offset [
 	| offsetVarName |
 	offsetVarName := self offsetVariableNameFor: fieldName.
 	"Is this field defined in a superclass?"
-	(superclass bindingOf: offsetVarName)
+	(self superclass bindingOf: offsetVarName)
 		ifNil: [
 			(self hasClassVarNamed: offsetVarName) 
 				ifFalse: [ self addClassVarNamed: offsetVarName ].
@@ -229,7 +229,7 @@ FFIExternalStructure class >> removeAllOffsetVariables [
 		thenDo: [ :each | self removeClassVarNamed: each ]
 ]
 
-{ #category : #'class management' }
+{ #category : #initialization }
 FFIExternalStructure class >> reset [
 	"Reset this structure and all its nested structures"
 	self resetStructureIfNotIn: Set new

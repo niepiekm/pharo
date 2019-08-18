@@ -554,19 +554,16 @@ MenuItemMorph >> mouseLeave: evt [
 ]
 
 { #category : #events }
-MenuItemMorph >> mouseLeaveDragging: evt [ 
+MenuItemMorph >> mouseLeaveDragging: evt [
+
 	"The mouse left the receiver. Do nothing if we're not in a 'valid menu transition', meaning that the current hand focus must be aimed at the owning menu."
 
-	owner ifNil: [^self].
-	evt hand mouseFocus == owner ifFalse: [^self].
-	"If we have a submenu, make sure we've got some time to enter it before actually leaving the menu item"
-	subMenu isNil 
-		ifTrue: [owner selectItem: nil event: evt]
-		ifFalse: 
-			[self 
-				addAlarm: #deselectTimeOut:
-				with: evt
-				after: 500]
+	owner ifNil: [ ^ self ].
+	evt hand mouseFocus == owner
+		ifFalse: [ ^ self ].	"If we have a submenu, make sure we've got some time to enter it before actually leaving the menu item"
+	subMenu
+		ifNil: [ owner selectItem: nil event: evt ]
+		ifNotNil: [ self addAlarm: #deselectTimeOut: with: evt after: 500 ]
 ]
 
 { #category : #events }
@@ -628,9 +625,9 @@ MenuItemMorph >> select: evt [
 MenuItemMorph >> selectionFillStyle [
 	"answer the fill style to use with the receiver is the selected  
 	element"
-	Display depth <= 2 ifTrue: [^ Color gray].
-	^ self theme settings menuSelectionColor.
 
+	Display depth <= 2 ifTrue: [ ^ Color gray ].
+	^ self theme menuSelectionColor
 ]
 
 { #category : #private }

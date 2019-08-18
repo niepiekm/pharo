@@ -152,6 +152,7 @@ OSWindow >> deliverEvent: anEvent [
 	"TODO..."
 	
 	TraceEvents == true ifTrue: [ Transcript show: anEvent; cr ].
+		
 	eventHandler ifNotNil: [ 
 		eventHandler handleEvent: anEvent ].
 	anEvent performDefaultAction 
@@ -195,6 +196,12 @@ OSWindow >> extent [
 { #category : #accessing }
 OSWindow >> extent: newExtent [
 	self validHandle extent: newExtent
+]
+
+{ #category : #'window management' }
+OSWindow >> focus [
+
+	self validHandle raise.
 ]
 
 { #category : #accessing }

@@ -4,7 +4,7 @@ Unit test for trait handling
 Class {
 	#name : #T2TraitTest,
 	#superclass : #T2AbstractTest,
-	#category : #'TraitsV2-Tests-Tests'
+	#category : #'TraitsV2-Tests'
 }
 
 { #category : #tests }
@@ -302,5 +302,25 @@ T2TraitTest >> testTraitHaveUsersInstanceVariable [
 	
 	self assert: (aClass allSlots anySatisfy: [:e | e name = #users]).
 	self assert: (aClass slotNamed: #users) definingClass equals: t1
+
+]
+
+{ #category : #tests }
+T2TraitTest >> testUsingTraitInAnonymousSubClassAndRedefiningIt [
+	| t1 aClass |
+
+	t1 := self newTrait: #T1 with: #().
+
+	aClass := Smalltalk anonymousClassInstaller make: [ :builder |
+		builder superclass: Object.
+		builder traitComposition: t1.
+	].
+
+	self deny: (Object subclasses includes: aClass).
+	
+	t1 := self newTrait: #T1 with: #(aSlot).
+	self assert: (aClass hasSlotNamed: #aSlot).
+	
+	self deny: (Object subclasses includes: aClass).
 
 ]
