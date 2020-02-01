@@ -197,10 +197,11 @@ SystemDictionary >> fillCaches [
 		When bootstrapping we want the class Class of the current kernel defined in the current namespace.
 		Since the current namespace should contains the class that describes itself as well as a new Class class.
 		we are done :)."
-		
-	classNames sort.
+	
+	
+	"The cached names are sorted to allow for a very efficient hasBindingThatBeginsWith: check"	
+	cachedClassNames := classNames sort.
 	cachedNonClassNames := nonClassNames sort.
-	cachedClassNames := classNames.
 	^{ classNames. nonClassNames }
 ]
 
@@ -379,7 +380,7 @@ SystemDictionary >> renameClassNamed: oldName as: newName [
 	| oldClass |
 	(oldClass := self at: oldName asSymbol ifAbsent: [ nil ]) 
 		ifNil: [ 
-			self crTrace: 'Class-rename for ' , oldName , ' ignored because ' , oldName , ' does not exist.'.
+			SystemNotification signal: 'Class-rename for ' , oldName , ' ignored because ' , oldName , ' does not exist.'.
 			^ self ].
 	oldClass rename: newName
 ]

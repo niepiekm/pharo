@@ -23,12 +23,12 @@ Class {
 	#category : #'Kernel-Classes'
 }
 
-{ #category : #'fileIn/Out' }
+{ #category : #'file in/out' }
 Class class >> allSuperclassesFor: aClass cache: cache [ 	
 	^ cache at: aClass ifAbsentPut: [aClass allSuperclasses asArray]
 ]
 
-{ #category : #'fileIn/Out' }
+{ #category : #'file in/out' }
 Class class >> doesNotIncludeInstanceOrSuperclassesFor: aClass in: unprocessedClasses cache: cache [ 
 	| soleInstance |
 	soleInstance := aClass soleInstance.
@@ -43,7 +43,7 @@ Class class >> hasNoDependenciesFor: aClass in: unprocessedClasses cache: cache 
 			self hasNoDependenciesForMetaclass: aClass in: unprocessedClasses cache: cache]] 
 ]
 
-{ #category : #'fileIn/Out' }
+{ #category : #'file in/out' }
 Class class >> hasNoDependenciesForMetaclass: aClass in: unprocessedClasses cache: cache [ 
 	| soleInstance |
 	soleInstance := aClass soleInstance.
@@ -51,7 +51,7 @@ Class class >> hasNoDependenciesForMetaclass: aClass in: unprocessedClasses cach
 				self hasNoSuperclassesOf: soleInstance in: unprocessedClasses cache: cache]
 ]
 
-{ #category : #'fileIn/Out' }
+{ #category : #'file in/out' }
 Class class >> hasNoSuperclassesOf: aClass in: unprocessedClasses cache: cache [ 
 	^ (unprocessedClasses includesAnyOf: (self allSuperclassesFor: aClass cache: cache)) not
 	
@@ -64,7 +64,7 @@ Class class >> rootsOfTheWorld [
 	^(self environment select: [:each | each isBehavior and: [each superclass isNil]]) asOrderedCollection
 ]
 
-{ #category : #'fileIn/Out' }
+{ #category : #'file in/out' }
 Class class >> superclassOrder: classes [
     "Arrange the classes in the collection, classes, in superclass order so the 
     classes can be properly filed in. Do it in sets instead of ordered collections.
@@ -169,21 +169,6 @@ Class >> addSubclass: aSubclass [
 		^ self ].
 	self subclasses do:[:cl| cl == aSubclass ifTrue:[^self]]. "Already my subclass"
 	self subclasses: (subclasses copyWith: aSubclass).
-]
-
-{ #category : #'class variables' }
-Class >> allClassVarNames [
-	"Answer a Set of the names of the receiver's class variables, including those
-	defined in the superclasses of the receiver."
-
-	| aSet |
-	self isRootInEnvironment
-		ifTrue: 
-			[^self classVarNames asSet]  "This is the keys so it is a new Set."
-		ifFalse: 
-			[aSet := self superclass allClassVarNames.
-			aSet addAll: self classVarNames.
-			^aSet]
 ]
 
 { #category : #'class variables' }
@@ -344,7 +329,7 @@ Class >> classVarNamed: aString put: anObject [
 
 { #category : #'class variables' }
 Class >> classVarNames [
-	"Answer a collection of the names of the class variables defined in the receiver."
+	"Answer a collection of the receiver's class variable names."
 
 	^self classPool keys sort
 ]
@@ -376,6 +361,14 @@ Class >> classVariables [
 	"Answer the meta objects of all class variables"
 
 	^self classPool associations
+]
+
+{ #category : #'accessing class hierarchy' }
+Class >> commonSuperclassWith: aClass [
+
+	^ self allSuperclasses detect: [ :class | (aClass allSuperclasses includes: class) ] ifNone: nil
+
+	
 ]
 
 { #category : #compiling }
@@ -477,18 +470,16 @@ Class >> deprecationRefactorings [
 { #category : #copying }
 Class >> duplicateClassWithNewName: aSymbol [
 	| copysName class |
-			
 	copysName := aSymbol asSymbol.
 	copysName = self name
 		ifTrue: [ ^ self ].
 	(self environment includesKey: copysName)
 		ifTrue: [ ^ self error: copysName , ' already exists' ].
-
-	class := self classInstaller make: [ :builder | 
-		builder 
-			fillFor: self;
-			name: copysName].
-		
+	class := self classInstaller
+		make: [ :builder | 
+			builder
+				fillFor: self;
+				name: copysName ].
 	class copyAllCategoriesFrom: self.
 	class class copyAllCategoriesFrom: self class.
 	^ class
@@ -593,7 +584,7 @@ Class >> hasSubclasses [
 ]
 
 { #category : #'subclass creation - immediate' }
-Class >> immediateSubclass: className instanceVariableNames: instvarNames 
+Class >> immediateSubclass: className instanceVariableNames: instVarNameList  
 	classVariableNames: classVarNames package: cat [
 	"
 	An immediate subclass define a class for which its value is coded within the OOP itself (like SmallInteger in 32 bits). It is not meant to be used by non-experimented users.
@@ -601,7 +592,7 @@ Class >> immediateSubclass: className instanceVariableNames: instvarNames
 	Immediates are objects that are stored in an object pointer using a tag to distinguish them from ordinary object pointers.  In v3 the only immediate is SmallInteger.  In 32-but spur there are SmallInteger and Character.  An implication of this is that in spur all Characters can be compared using #==.  In 64-bit Spur there is also SmallFloat64.  If a float's exponent is in the middle 8-bits of the 11-bit exponent range then it will be immediate.  If a float's exponent is outside of the middle 8-bits it will be boxed.
 	"
 	^self immediateSubclass: className
-		instanceVariableNames: instvarNames
+		instanceVariableNames: instVarNameList 
 		classVariableNames: classVarNames
 		poolDictionaries: ''
 		package: cat
@@ -808,7 +799,8 @@ Class >> removeClassVarNamed: aString interactive: interactive [
 			ifFalse: [ ^ self ] ].
 	
 	varUserClass 
-		ifNotNil: [self crTrace: self name , ' (' , aString , ' is Undeclared) '.
+		ifNotNil: [
+			NewUndeclaredWarning signal: aString in: self name.
 			Undeclared declare: aSymbol from: self classPool]
 		ifNil: [ self classPool removeKey: aSymbol].
 		
@@ -1162,23 +1154,23 @@ Class >> usesPoolVarNamed: aString [
 ]
 
 { #category : #'subclass creation - deprecated' }
-Class >> variableByteSubclass: className instanceVariableNames: instvarNames classVariableNames: classVarNames category: cat [
+Class >> variableByteSubclass: className instanceVariableNames: instVarNameList  classVariableNames: classVarNames category: cat [
 	"Added to allow for a simplified subclass creation experience. "
 
 	^ self
 		variableByteSubclass: className
-		instanceVariableNames: instvarNames
+		instanceVariableNames: instVarNameList 
 		classVariableNames: classVarNames
 		package: cat
 ]
 
 { #category : #'subclass creation - variableByte' }
-Class >> variableByteSubclass: className instanceVariableNames: instvarNames classVariableNames: classVarNames package: cat [
+Class >> variableByteSubclass: className instanceVariableNames: instVarNameList  classVariableNames: classVarNames package: cat [
 	"Added to allow for a simplified subclass creation experience. "
 
 	^ self
 		variableByteSubclass: className
-		instanceVariableNames: instvarNames
+		instanceVariableNames: instVarNameList 
 		classVariableNames: classVarNames
 		poolDictionaries: ''
 		package: cat

@@ -240,19 +240,20 @@ ExceptionTest >> testResumableOuter [
 	result := [Notification signal. 4] 
 		on: Notification 
 		do: [:ex | ex outer. ex return: 5].
-	self assert: result = 5
+	self assert: result equals: 5
 
 ]
 
 { #category : #'tests - outer' }
 ExceptionTest >> testResumablePass [
-
 	| result |
-	result := [Notification signal. 4] 
-		on: Notification 
-		do: [:ex | ex pass. ex return: 5].
-	self assert: result = 4
-
+	result := [ Notification signal.
+	4 ]
+		on: Notification
+		do: [ :ex | 
+			ex pass.
+			ex return: 5 ].
+	self assert: result equals: 4
 ]
 
 { #category : #'tests - exceptiontester' }
